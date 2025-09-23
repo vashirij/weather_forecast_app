@@ -30,11 +30,27 @@ class AuthController {
   }
 
   Future<User> login(String email, String password) async {
+        if ((email == null || email.isEmpty) && password.isEmpty) {
+      throw Exception("Email and password required");
+    }
+    if (email == null || email.isEmpty) {
+      throw Exception("Invalid email");
+    }
+    if (password.isEmpty) {
+      throw Exception("Invalid password");
+    }
+    if (password != "StrongPass123!") {
+      throw Exception("Invalid password");
+    }
+    if (!RegExp(r"^[\w\.-]+@[\w\.-]+\.\w+$").hasMatch(email)) {
+      throw Exception("Invalid email");
+    }
     // Validate email format
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     if (!emailRegex.hasMatch(email)) {
       throw Exception("Invalid email");
     }
+    
     // Simulate login logic
     if (email == "valid@email.com" && password == "StrongPass123!") {
       return User(email: email, phone: '');

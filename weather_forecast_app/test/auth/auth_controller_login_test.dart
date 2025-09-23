@@ -23,6 +23,27 @@ void main() {
       );
     });
 
+    // === Empty credentials ===
+        test("Login fails with empty credentials", () async {
+      expect(
+        () => controller.login("", ""),
+        throwsA(predicate((e) => e.toString().contains("Email and password required"))),
+      );
+    });
+        // === Invalid email ===
+    test("Login fails with invalid email format", () async {
+      expect(
+        () => controller.login("invalid-email", "Password123!"),
+        throwsA(predicate((e) => e.toString().contains("Invalid email"))),
+      );
+    });
+    // === Null email ===
+    test("Login fails when email is null", () async {
+      expect(
+        () => controller.login(null as dynamic, "StrongPass123!"),
+        throwsA(isA<Exception>()),
+      );
+    });
     // === Google OAuth ===
     test("Login with Google OAuth works", () async {
       final user = await controller.loginWithGoogle();
@@ -43,12 +64,12 @@ void main() {
       );
     });
 
-    // === Invalid email ===
-    test("Login fails with invalid email format", () async {
+    test("Login fails with empty OTP", () async {
       expect(
-        () => controller.login("invalid-email", "Password123!"),
-        throwsA(predicate((e) => e.toString().contains("Invalid email"))),
+        () => controller.loginWithPhone(""),
+        throwsA(predicate((e) => e.toString().contains("OTP required"))),
       );
     });
+
   });
 }
