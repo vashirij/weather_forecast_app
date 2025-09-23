@@ -1,0 +1,40 @@
+name: weather_forecast_app
+description: A new Flutter project.
+
+# Prevent publishing to pub.dev
+publish_to: 'none'
+
+# Versioning
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase & Auth
+  firebase_core: ^3.5.0
+  firebase_auth: ^5.3.0
+  google_sign_in: ^6.2.1
+
+  # State management
+  provider: ^6.1.2
+
+  # UI icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Testing utilities
+  mocktail: ^1.0.3
+  firebase_auth_mocks: ^0.14.1
+
+  # Recommended lint rules
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,51 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:weather_forecast_app/controllers/auth_controller.dart';
+import 'package:weather_forecast_app/models/user.dart';
+
+void main() {
+  final controller = AuthController();
+
+  group("Login Feature - Story 1", () {
+    // === Email & Password ===
+    test("Login succeeds with valid email & password", () async {
+      final user = await controller.login("valid@email.com", "StrongPass123!");
+      expect(user, isA<User>());
+      expect(user.email, "valid@email.com");
+    });
+
+    test("Login fails with wrong password", () async {
+      expect(
+        () => controller.login("valid@email.com", "WrongPass"),
+        throwsA(predicate((e) => e.toString().contains("Invalid password"))),
+      );
+    });
+
+    // === Google OAuth ===
+    test("Login with Google OAuth works", () async {
+      final user = await controller.loginWithGoogle();
+      expect(user, isA<User>());
+      expect(user.email, contains("@"));
+    });
+
+    // === Phone OTP ===
+    test("Login succeeds with valid phone OTP", () async {
+      final user = await controller.loginWithPhone("VALID_OTP");
+      expect(user.phone, "VALID_OTP");
+    });
+
+    test("Login fails with expired OTP", () async {
+      expect(
+        () => controller.loginWithPhone("EXPIRED_OTP"),
+        throwsA(predicate((e) => e.toString().contains("Invalid or expired OTP"))),
+      );
+    });
+
+    // === Invalid email ===
+    test("Login fails with invalid email format", () async {
+      expect(
+        () => controller.login("invalid-email", "Password123!"),
+        throwsA(predicate((e) => e.toString().contains("Invalid email"))),
+      );
+    });
+  });
+}
