@@ -23,6 +23,12 @@ class AuthController {
   Future<User> loginWithPhone(String otp) async {
     // Simulate phone OTP login
     await Future.delayed(Duration(milliseconds: 100));
+        if (otp.isEmpty) {
+      throw Exception("OTP required");
+    }
+    if (otp == "VALID_OTP") {
+      return User(phone: otp, email: '');
+    }
     if (otp == "EXPIRED_OTP") {
       throw Exception("Invalid or expired OTP");
     }
@@ -30,7 +36,7 @@ class AuthController {
   }
 
   Future<User> login(String email, String password) async {
-        if ((email == null || email.isEmpty) && password.isEmpty) {
+    if ((email == null || email.isEmpty) && password.isEmpty) {
       throw Exception("Email and password required");
     }
     if (email == null || email.isEmpty) {

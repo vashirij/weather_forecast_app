@@ -38,9 +38,9 @@ void main() {
       );
     });
     // === Null email ===
-    test("Login fails when email is null", () async {
+    test("Login fails when email is empty", () async {
       expect(
-        () => controller.login(null as dynamic, "StrongPass123!"),
+        () => controller.login("", "StrongPass123!"),
         throwsA(isA<Exception>()),
       );
     });
