@@ -3,8 +3,11 @@ import 'package:weather_forecast_app/controllers/auth_controller.dart';
 import 'package:weather_forecast_app/models/user.dart';
 
 void main() {
-  final controller = AuthController();
+  late AuthController controller;
 
+  setUp(() {
+    controller = AuthController();
+  });
   group("Login Feature - Story 1", () {
     // === Email & Password ===
     test("Login succeeds with valid email & password", () async {
