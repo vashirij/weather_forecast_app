@@ -19,13 +19,19 @@ class _SigninScreenState extends State<SigninScreen> {
 
   bool _isLoading = false;
 
-  // === Email/Password login ===
-  void _signin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+  // === Helper to toggle loading ===
+  void _setLoading(bool value) {
+    if (mounted) {
+      setState(() => _isLoading = value);
+    }
+  }
 
+  // === Email/Password login ===
+  Future<void> _signin() async {
+    if (_formKey.currentState!.validate()) {
+      _setLoading(true);
       try {
-        User user = await _authController.login(
+        final user = await _authController.login(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
@@ -34,40 +40,43 @@ class _SigninScreenState extends State<SigninScreen> {
       } catch (e) {
         Helpers.showSnackBar(context, "Sign in failed: $e", isError: true);
       } finally {
-        setState(() => _isLoading = false);
+        _setLoading(false);
       }
     }
   }
 
   // === Google OAuth login ===
-  void _signinWithGoogle() async {
-    setState(() => _isLoading = true);
+  Future<void> _signinWithGoogle() async {
+    _setLoading(true);
     try {
-      User user = await _authController.loginWithGoogle();
-      Helpers.showSnackBar(context, "Google sign-in successful: ${user.email}");
+      final user = await _authController.loginWithGoogle();
+      Helpers.showSnackBar(
+        context,
+        "Google sign-in successful: ${user.email ?? 'Unknown'}",
+      );
       Navigator.pushReplacementNamed(context, '/dailyForecast');
     } catch (e) {
       Helpers.showSnackBar(context, "Google sign-in failed: $e", isError: true);
     } finally {
-      setState(() => _isLoading = false);
+      _setLoading(false);
     }
   }
 
   // === Phone OTP login ===
-  void _signinWithPhone() async {
-    if (_phoneController.text.isEmpty) {
+  Future<void> _signinWithPhone() async {
+    if (_phoneController.text.trim().isEmpty) {
       Helpers.showSnackBar(context, "Enter phone number/OTP", isError: true);
       return;
     }
 
-    setState(() => _isLoading = true);
+    _setLoading(true);
     try {
-      User user = await _authController.loginWithPhone(
+      final user = await _authController.loginWithPhone(
         _phoneController.text.trim(),
       );
       Helpers.showSnackBar(
         context,
-        "Phone OTP sign-in successful: ${user.phone}",
+        "Phone OTP sign-in successful: ${user.phone ?? 'Unknown'}",
       );
       Navigator.pushReplacementNamed(context, '/dailyForecast');
     } catch (e) {
@@ -77,97 +86,111 @@ class _SigninScreenState extends State<SigninScreen> {
         isError: true,
       );
     } finally {
-      setState(() => _isLoading = false);
+      _setLoading(false);
     }
   }
 
-  // === Forgot Password ===
-  void _forgotPassword() {
-    Navigator.pushNamed(context, '/forgotPassword'); // make sure route exists
+  void _forgotPassword() => Navigator.pushNamed(context, '/forgotPassword');
+
+  void _goToSignup() => Navigator.pushNamed(context, '/signup');
+
+  // === Validators ===
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) return "Enter email";
+    if (!value.contains("@")) return "Enter valid email";
+    return null;
   }
 
-  // === Navigate to Signup ===
-  void _goToSignup() {
-    Navigator.pushNamed(context, '/signup'); // make sure route exists
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return "Enter password";
+    if (value.length < 8) return "Password too short (min 8 chars)";
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Sign In")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // === Email field ===
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? "Enter email" : null,
-              ),
-              const SizedBox(height: 12),
-
-              // === Password field ===
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Password"),
-                validator: (value) => value == null || value.length < 8
-                    ? "Enter valid password"
-                    : null,
-              ),
-              const SizedBox(height: 12),
-
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _signin,
-                          child: const Text("Sign In"),
-                        ),
-                        const SizedBox(height: 10),
-                        OutlinedButton.icon(
-                          onPressed: _signinWithGoogle,
-                          icon: const Icon(Icons.g_mobiledata, size: 28),
-                          label: const Text("Sign In with Google"),
-                        ),
-                        const SizedBox(height: 10),
-                        OutlinedButton.icon(
-                          onPressed: _signinWithPhone,
-                          icon: const Icon(Icons.phone_android),
-                          label: const Text("Sign In with Phone OTP"),
-                        ),
-                      ],
-                    ),
-
-              const SizedBox(height: 20),
-
-              // Forgot password
-              TextButton(
-                onPressed: _forgotPassword,
-                child: const Text("Forgot Password?"),
-              ),
-
-              // Navigate to Signup
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text("Don’t have an account?"),
+                  // === Email field ===
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: "Email"),
+                    validator: _validateEmail,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // === Password field ===
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: "Password"),
+                    validator: _validatePassword,
+                  ),
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: _signin,
+                    child: const Text("Sign In"),
+                  ),
+                  const SizedBox(height: 10),
+
+                  OutlinedButton.icon(
+                    onPressed: _signinWithGoogle,
+                    icon: Image.asset(
+                      "images/google_logo.png",
+                      height: 20,
+                      width: 20,
+                    ),
+                    label: const Text("Sign In with Google"),
+                  ),
+                  const SizedBox(height: 10),
+
+                  OutlinedButton.icon(
+                    onPressed: _signinWithPhone,
+                    icon: const Icon(Icons.phone_android),
+                    label: const Text("Sign In with Phone OTP"),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Forgot password
                   TextButton(
-                    onPressed: _goToSignup,
-                    child: const Text("Sign Up"),
+                    onPressed: _forgotPassword,
+                    child: const Text("Forgot Password?"),
+                  ),
+
+                  // Navigate to Signup
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Don’t have an account?"),
+                      TextButton(
+                        onPressed: _goToSignup,
+                        child: const Text("Sign Up"),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // === Loading Overlay ===
+          if (_isLoading)
+            Container(
+              color: Colors.black45,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+        ],
       ),
     );
   }

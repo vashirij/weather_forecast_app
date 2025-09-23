@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "564253287329",
+    "project_id": "mjolo69",
+    "storage_bucket": "mjolo69.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564253287329:android:a59fe273a06b03732461e0",
+        "android_client_info": {
+          "package_name": "com.example.weather_forecast_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "564253287329-2o66o85bqu20eakm1sod625u4p7q33la.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGBJaqfwjE7mpFceTDUNOEEhA6k6TLOtg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "564253287329-2o66o85bqu20eakm1sod625u4p7q33la.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564253287329:android:e5c5a7c35ad17b662461e0",
+        "android_client_info": {
+          "package_name": "za.co.grinehub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "564253287329-te8ed99sab8eo9poj8bp9rgaki3mf9gh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "za.co.grinehub",
+            "certificate_hash": "d00fefe36e0b8025c16eaaa062bc5d15750dbc90"
+          }
+        },
+        {
+          "client_id": "564253287329-2o66o85bqu20eakm1sod625u4p7q33la.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGBJaqfwjE7mpFceTDUNOEEhA6k6TLOtg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "564253287329-2o66o85bqu20eakm1sod625u4p7q33la.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
