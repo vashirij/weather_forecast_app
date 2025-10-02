@@ -28,7 +28,7 @@ class WeatherForecastApp extends StatelessWidget {
       home: const SigninScreen(),
       routes: {
         '/signup': (context) => const SignupScreen(),
-        '/dailyForecast': (context) => const DailyForecastScreen(),
+        '/dailyForecast': (context) => DailyForecastScreen(),
         //'/forgotPassword': (context) => const ForgotPasswordScreen(),
       },
     );

@@ -1,0 +1,99 @@
+// Class specifications diagram (detailed attributes and methods)
+// Render with: dot -Tpng lib/diagrams/class_specifications.dot -o lib/diagrams/class_specifications.png
+
+digraph ClassSpecs {
+  rankdir=LR;
+  node [shape=plain];
+
+  WeatherService [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>WeatherService</B></TD></TR>
+      <TR><TD ALIGN="LEFT">apiKey: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ fetchForecast(lat: double, lon: double): Future&lt;Map&lt;String,dynamic&gt;&gt;<BR/>+ reverseGeocode(lat: double, lon: double): Future&lt;String&gt;</TD></TR>
+    </TABLE>
+  >];
+
+  HourlyForecast [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>HourlyForecast</B></TD></TR>
+      <TR><TD ALIGN="LEFT">time: String<BR/>temp: String<BR/>icon: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ (data holder)</TD></TR>
+    </TABLE>
+  >];
+
+  DailyForecast [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>DailyForecast</B></TD></TR>
+      <TR><TD ALIGN="LEFT">day: String<BR/>high: String<BR/>low: String<BR/>icon: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ (data holder)</TD></TR>
+    </TABLE>
+  >];
+
+  AuthController [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>AuthController</B></TD></TR>
+      <TR><TD ALIGN="LEFT">(auth state fields)</TD></TR>
+      <TR><TD ALIGN="LEFT">+ signOut(): Future&lt;void&gt;<BR/>+ (auth helpers)</TD></TR>
+    </TABLE>
+  >];
+
+  DailyForecastScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>DailyForecastScreen (Stateful)</B></TD></TR>
+      <TR><TD ALIGN="LEFT">_weatherService: WeatherService<BR/>_hourly: List&lt;HourlyForecast&gt;<BR/>_daily: List&lt;DailyForecast&gt;<BR/>_cityName: String<BR/>_loading: bool<BR/>_error: String?</TD></TR>
+      <TR><TD ALIGN="LEFT">+ initState()<BR/>+ _loadWithLocation(): Future&lt;void&gt;<BR/>+ _buildBody(): Widget<BR/>+ _onMenuSelected(value): void</TD></TR>
+    </TABLE>
+  >];
+
+  TodayScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>TodayScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>hourlyPreview: List&lt;HourlyForecast&gt;<BR/>weekly: List&lt;DailyForecast&gt;<BR/>min?: String<BR/>max?: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  HourlyScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>HourlyScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>hourly: List&lt;HourlyForecast&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  WeeklyScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>WeeklyScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>weekly: List&lt;DailyForecast&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  SimpleLineChart [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD><B>SimpleLineChart</B></TD></TR>
+      <TR><TD ALIGN="LEFT">seriesA: List&lt;int&gt;<BR/>seriesB: List&lt;int&gt;<BR/>labels: List&lt;String&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget<BR/>+ CustomPainter implementation</TD></TR>
+    </TABLE>
+  >];
+
+  // Relationships
+  DailyForecastScreen -> WeatherService [label="uses", fontsize=10];
+  DailyForecastScreen -> AuthController [label="uses", fontsize=10];
+  DailyForecastScreen -> TodayScreen [label="composes", fontsize=10];
+  DailyForecastScreen -> HourlyScreen [label="composes", fontsize=10];
+  DailyForecastScreen -> WeeklyScreen [label="composes", fontsize=10];
+
+  WeatherService -> HourlyForecast [label="creates", arrowhead=vee, fontsize=10];
+  WeatherService -> DailyForecast [label="creates", arrowhead=vee, fontsize=10];
+
+  TodayScreen -> HourlyForecast [label="reads", fontsize=10];
+  HourlyScreen -> HourlyForecast [label="reads", fontsize=10];
+  WeeklyScreen -> DailyForecast [label="reads", fontsize=10];
+  HourlyScreen -> SimpleLineChart [label="uses", fontsize=10];
+  WeeklyScreen -> SimpleLineChart [label="uses", fontsize=10];
+
+  // Layout hints
+  { rank=same; WeatherService; AuthController }
+  { rank=same; TodayScreen; HourlyScreen; WeeklyScreen }
+}

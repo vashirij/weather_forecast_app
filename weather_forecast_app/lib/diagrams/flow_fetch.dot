@@ -1,0 +1,28 @@
+// Forecast fetch flowchart (cache + error handling)
+// Render: dot -Tpng lib/diagrams/flow_fetch.dot -o lib/diagrams/flow_fetch.png
+
+digraph FlowFetch {
+  rankdir=TB;
+  node [shape=box, fontsize=11];
+
+  start [shape=oval, label="Start (fetch request)"];
+  checkCache [label="Check Local Cache"];
+  cacheHit [shape=diamond, label="Cache valid?"];
+  useCache [label="Use cached data -> render"];
+  callApi [label="Call WeatherService.fetchForecast"];
+  apiResp [shape=diamond, label="API OK (200)?"];
+  parse [label="Parse response -> build models"];
+  updateCache [label="Update cache"];
+  render [label="Render UI (Today/Hourly/Weekly)"];
+  handleErr [label="Handle error (401, network)"];
+  end [shape=oval, label="Done"];
+
+  start -> checkCache -> cacheHit;
+  cacheHit -> useCache [label="Yes"];
+  cacheHit -> callApi [label="No or force refresh"];
+  callApi -> apiResp;
+  apiResp -> parse [label="Yes"];
+  apiResp -> handleErr [label="No"];
+  parse -> updateCache -> render -> end;
+  handleErr -> render -> end;
+}

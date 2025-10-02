@@ -1,0 +1,44 @@
+digraph UseCaseDiagram {
+  rankdir=LR;
+  node [fontsize=12];
+
+  // Actor
+  User [shape=actor, label="User"];
+
+  // System boundary cluster
+  subgraph cluster_system {
+    label = "WeatherApp System";
+    style = rounded;
+    color = grey;
+
+    // use cases inside system boundary
+    node [shape=ellipse];
+    Login [label="Login"];
+    ForgotPassword [label="Forgot Password"];
+    ViewToday [label="View Today"];
+    ViewHourly [label="View Hourly"];
+    ViewWeekly [label="View Weekly"];
+    Logout [label="Logout"];
+    FetchForecast [label="Fetch Forecast (start/refresh)"];
+  }
+
+  // Actor interactions
+  User -> Login;
+  User -> ViewToday;
+  User -> ViewHourly;
+  User -> ViewWeekly;
+  User -> Logout;
+
+  // System (automated) triggers
+  // (System actor represented as external trigger)
+  System [shape=box, label="System", style=dotted];
+  System -> FetchForecast [label="triggers", style=dotted];
+
+  // Include relation: Login includes Forgot Password (per request)
+  Login -> ForgotPassword [label="<<include>>", style=dashed, arrowhead=open];
+
+  // Extend placeholder (no extensions currently)
+  // e.g., ForgotPassword -> Login [label="<<extend>>", style=dashed, arrowhead=open];
+
+  { rank=same; User; System }
+}

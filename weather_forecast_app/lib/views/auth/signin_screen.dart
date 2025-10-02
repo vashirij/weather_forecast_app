@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../controllers/auth_controller.dart';
-import '../../models/user.dart';
 import '../../utils/helpers.dart';
+import 'forgot_password_screen.dart';
+
+const Color kPrimaryColor = Color(0xFF0A3D62);
+const Color kSurfaceLight = Color(0xFFF4F8FF);
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -14,8 +17,11 @@ class _SigninScreenState extends State<SigninScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
+  // phone sign-in removed; no phone controller required
   final _authController = AuthController();
+
+  // toggle password visibility
+  bool _obscurePassword = true;
 
   bool _isLoading = false;
 
@@ -35,62 +41,26 @@ class _SigninScreenState extends State<SigninScreen> {
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
-        Helpers.showSnackBar(context, "Welcome back ${user.email}");
-        Navigator.pushReplacementNamed(context, '/dailyForecast');
+        if (!mounted) return;
+        final ctx = context;
+        Helpers.showSnackBar(ctx, "Welcome back ${user.email}");
+        Navigator.pushReplacementNamed(ctx, '/dailyForecast');
       } catch (e) {
-        Helpers.showSnackBar(context, "Sign in failed: $e", isError: true);
+        if (!mounted) return;
+        final ctx = context;
+        Helpers.showSnackBar(ctx, "Sign in failed: $e", isError: true);
       } finally {
         _setLoading(false);
       }
     }
   }
 
-  // === Google OAuth login ===
-  Future<void> _signinWithGoogle() async {
-    _setLoading(true);
-    try {
-      final user = await _authController.loginWithGoogle();
-      Helpers.showSnackBar(
-        context,
-        "Google sign-in successful: ${user.email ?? 'Unknown'}",
-      );
-      Navigator.pushReplacementNamed(context, '/dailyForecast');
-    } catch (e) {
-      Helpers.showSnackBar(context, "Google sign-in failed: $e", isError: true);
-    } finally {
-      _setLoading(false);
-    }
-  }
+  // Google and Phone OTP sign-ins removed; only email/password supported here.
 
-  // === Phone OTP login ===
-  Future<void> _signinWithPhone() async {
-    if (_phoneController.text.trim().isEmpty) {
-      Helpers.showSnackBar(context, "Enter phone number/OTP", isError: true);
-      return;
-    }
-
-    _setLoading(true);
-    try {
-      final user = await _authController.loginWithPhone(
-        _phoneController.text.trim(),
-      );
-      Helpers.showSnackBar(
-        context,
-        "Phone OTP sign-in successful: ${user.phone ?? 'Unknown'}",
-      );
-      Navigator.pushReplacementNamed(context, '/dailyForecast');
-    } catch (e) {
-      Helpers.showSnackBar(
-        context,
-        "Phone OTP sign-in failed: $e",
-        isError: true,
-      );
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  void _forgotPassword() => Navigator.pushNamed(context, '/forgotPassword');
+  void _forgotPassword() => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+  );
 
   void _goToSignup() => Navigator.pushNamed(context, '/signup');
 
@@ -110,87 +80,163 @@ class _SigninScreenState extends State<SigninScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign In")),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // === Email field ===
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: "Email"),
-                    validator: _validateEmail,
+      backgroundColor: kSurfaceLight,
+      appBar: AppBar(
+        title: const Text("Sign In", style: TextStyle(color: Colors.white)),
+        backgroundColor: kPrimaryColor,
+        foregroundColor: Colors.white,
+      ),
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight:
+                        MediaQuery.of(context).size.height -
+                        MediaQuery.of(context).padding.vertical -
+                        kToolbarHeight,
                   ),
-                  const SizedBox(height: 12),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          inputDecorationTheme: InputDecorationTheme(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            prefixIconColor: kPrimaryColor,
+                          ),
+                          elevatedButtonTheme: ElevatedButtonThemeData(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          textButtonTheme: TextButtonThemeData(
+                            style: TextButton.styleFrom(
+                              foregroundColor: kPrimaryColor,
+                            ),
+                          ),
+                        ),
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const SizedBox(height: 10),
+                                  // === Email field ===
+                                  TextFormField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: const InputDecoration(
+                                      labelText: "Email",
+                                    ),
+                                    validator: _validateEmail,
+                                  ),
+                                  const SizedBox(height: 12),
 
-                  // === Password field ===
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: "Password"),
-                    validator: _validatePassword,
-                  ),
-                  const SizedBox(height: 20),
+                                  // === Password field ===
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    decoration: InputDecoration(
+                                      labelText: "Password",
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility
+                                              : Icons.visibility_off,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                                !_obscurePassword;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    validator: _validatePassword,
+                                  ),
+                                  const SizedBox(height: 20),
 
-                  ElevatedButton(
-                    onPressed: _signin,
-                    child: const Text("Sign In"),
-                  ),
-                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    height: 48,
+                                    child: ElevatedButton(
+                                      onPressed: _signin,
+                                      child: _isLoading
+                                          ? const CircularProgressIndicator(
+                                              color: Colors.white,
+                                            )
+                                          : const Text("Sign In"),
+                                    ),
+                                  ),
 
-                  OutlinedButton.icon(
-                    onPressed: _signinWithGoogle,
-                    icon: Image.asset(
-                      "images/google_logo.png",
-                      height: 20,
-                      width: 20,
-                    ),
-                    label: const Text("Sign In with Google"),
-                  ),
-                  const SizedBox(height: 10),
+                                  const SizedBox(height: 10),
 
-                  OutlinedButton.icon(
-                    onPressed: _signinWithPhone,
-                    icon: const Icon(Icons.phone_android),
-                    label: const Text("Sign In with Phone OTP"),
-                  ),
-                  const SizedBox(height: 20),
+                                  const SizedBox(height: 20),
 
-                  // Forgot password
-                  TextButton(
-                    onPressed: _forgotPassword,
-                    child: const Text("Forgot Password?"),
-                  ),
+                                  // Forgot password
+                                  TextButton(
+                                    onPressed: _forgotPassword,
+                                    child: const Text("Forgot Password?"),
+                                  ),
 
-                  // Navigate to Signup
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don’t have an account?"),
-                      TextButton(
-                        onPressed: _goToSignup,
-                        child: const Text("Sign Up"),
+                                  // Navigate to Signup
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Text("Don’t have an account?"),
+                                      TextButton(
+                                        onPressed: _goToSignup,
+                                        child: const Text("Sign Up"),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          // === Loading Overlay ===
-          if (_isLoading)
-            Container(
-              color: Colors.black45,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+              // === Loading Overlay ===
+              if (_isLoading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black45,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

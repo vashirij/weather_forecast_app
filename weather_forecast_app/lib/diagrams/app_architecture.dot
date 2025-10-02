@@ -1,0 +1,55 @@
+// App architecture diagram for weather_forecast_app
+// Generate with: dot -Tpng app_architecture.dot -o app_architecture.png
+
+digraph WeatherApp {
+  rankdir=LR;
+  node [shape=record, fontsize=10];
+
+  WeatherService [label="{WeatherService|+ apiKey: String\l+ fetchForecast(lat,lon): Map\l+ reverseGeocode(lat,lon): String\l}"];
+  HourlyForecast [label="{HourlyForecast|+ time: String\l+ temp: String\l+ icon: String\l}"];
+  DailyForecastModel [label="{DailyForecast|+ day: String\l+ high: String\l+ low: String\l+ icon: String\l}"];
+  AuthController [label="{AuthController|+ signOut(): Future<void>\l}"];
+
+  DailyForecastScreen [label="{DailyForecastScreen (Stateful)|- _weatherService: WeatherService\l- _hourly: List<HourlyForecast>\l- _daily: List<DailyForecast>\l- _cityName: String\l+ _loadWithLocation()\l+ _buildBody(): Widget\l}"];
+  TodayScreen [label="{TodayScreen|+ city: String\l+ hourlyPreview: List<HourlyForecast>\l+ weekly: List<DailyForecast>\l+ min?: String\l+ max?: String\l}"];
+  HourlyScreen [label="{HourlyScreen|+ city: String\l+ hourly: List<HourlyForecast>\l}"];
+  WeeklyScreen [label="{WeeklyScreen|+ city: String\l+ weekly: List<DailyForecast>\l}"];
+  SimpleLineChart [label="{SimpleLineChart|+ seriesA: List<int>\l+ seriesB: List<int>\l+ labels: List<String>\l}"];
+
+  // Relationships
+  DailyForecastScreen -> WeatherService [label="uses"];
+  DailyForecastScreen -> AuthController [label="uses"];
+  DailyForecastScreen -> TodayScreen [label="composes"];
+  DailyForecastScreen -> HourlyScreen [label="composes"];
+  DailyForecastScreen -> WeeklyScreen [label="composes"];
+
+  WeatherService -> HourlyForecast [label="returns", arrowhead=vee];
+  WeatherService -> DailyForecastModel [label="returns", arrowhead=vee];
+  TodayScreen -> HourlyForecast [label="reads"];
+  HourlyScreen -> HourlyForecast [label="reads"];
+  WeeklyScreen -> DailyForecastModel [label="reads"];
+  HourlyScreen -> SimpleLineChart [label="uses"];
+  WeeklyScreen -> SimpleLineChart [label="uses"];
+
+  // Use cases (actors on left)
+  node [shape=ellipse, fontsize=10];
+  User [label="User"];
+  System [label="System"];
+
+  User -> "View Today" [label="triggers"];
+  User -> "View Hourly" [label="triggers"];
+  User -> "View Weekly" [label="triggers"];
+  User -> "Logout" [label="triggers"];
+  System -> "Fetch Forecast" [label="triggers at start/refresh"];
+
+  // Associate use cases to components
+  "View Today" -> TodayScreen;
+  "View Hourly" -> HourlyScreen;
+  "View Weekly" -> WeeklyScreen;
+  "Fetch Forecast" -> WeatherService;
+  "Logout" -> AuthController;
+
+  // layout hints
+  { rank=same; WeatherService; AuthController }
+  { rank=same; TodayScreen; HourlyScreen; WeeklyScreen }
+}

@@ -1,0 +1,98 @@
+// Class diagram for weather_forecast_app (HTML table labels)
+// Render: dot -Tpng lib/diagrams/class_diagram.dot -o lib/diagrams/class_diagram.png
+
+digraph ClassDiagram {
+  rankdir=LR;
+  node [shape=plain];
+
+  WeatherService [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>WeatherService</B></TD></TR>
+      <TR><TD ALIGN="LEFT">apiKey: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ fetchForecast(lat: double, lon: double): Map&lt;String, dynamic&gt;<BR/>+ reverseGeocode(lat: double, lon: double): String</TD></TR>
+    </TABLE>
+  >];
+
+  HourlyForecast [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>HourlyForecast</B></TD></TR>
+      <TR><TD ALIGN="LEFT">time: String<BR/>temp: String<BR/>icon: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ (data holders)</TD></TR>
+    </TABLE>
+  >];
+
+  DailyForecast [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>DailyForecast</B></TD></TR>
+      <TR><TD ALIGN="LEFT">day: String<BR/>high: String<BR/>low: String<BR/>icon: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ (data holders)</TD></TR>
+    </TABLE>
+  >];
+
+  AuthController [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>AuthController</B></TD></TR>
+      <TR><TD ALIGN="LEFT">(auth state)</TD></TR>
+      <TR><TD ALIGN="LEFT">+ signOut(): Future&lt;void&gt;</TD></TR>
+    </TABLE>
+  >];
+
+  DailyForecastScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>DailyForecastScreen (Stateful)</B></TD></TR>
+      <TR><TD ALIGN="LEFT">_weatherService: WeatherService<BR/>_hourly: List&lt;HourlyForecast&gt;<BR/>_daily: List&lt;DailyForecast&gt;<BR/>_cityName: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ _loadWithLocation(): Future&lt;void&gt;<BR/>+ _buildBody(): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  TodayScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>TodayScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>hourlyPreview: List&lt;HourlyForecast&gt;<BR/>weekly: List&lt;DailyForecast&gt;<BR/>min?: String<BR/>max?: String</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  HourlyScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>HourlyScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>hourly: List&lt;HourlyForecast&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  WeeklyScreen [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>WeeklyScreen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">city: String<BR/>weekly: List&lt;DailyForecast&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  SimpleLineChart [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD><B>SimpleLineChart</B></TD></TR>
+      <TR><TD ALIGN="LEFT">seriesA: List&lt;int&gt;<BR/>seriesB: List&lt;int&gt;<BR/>labels: List&lt;String&gt;</TD></TR>
+      <TR><TD ALIGN="LEFT">+ build(context): Widget</TD></TR>
+    </TABLE>
+  >];
+
+  // Relationships
+  DailyForecastScreen -> WeatherService [label="uses"];
+  DailyForecastScreen -> AuthController [label="uses"];
+  DailyForecastScreen -> TodayScreen [label="composes"];
+  DailyForecastScreen -> HourlyScreen [label="composes"];
+  DailyForecastScreen -> WeeklyScreen [label="composes"];
+
+  WeatherService -> HourlyForecast [label="returns", arrowhead=vee];
+  WeatherService -> DailyForecast [label="returns", arrowhead=vee];
+  TodayScreen -> HourlyForecast [label="reads"];
+  HourlyScreen -> HourlyForecast [label="reads"];
+  WeeklyScreen -> DailyForecast [label="reads"];
+  HourlyScreen -> SimpleLineChart [label="uses"];
+  WeeklyScreen -> SimpleLineChart [label="uses"];
+
+  // layout hints
+  { rank=same; WeatherService; AuthController }
+  { rank=same; TodayScreen; HourlyScreen; WeeklyScreen }
+}

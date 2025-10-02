@@ -1,0 +1,28 @@
+// Database schema diagram (tables, PK/FK, and indexes)
+// Render: dot -Tpng lib/diagrams/database_schema.dot -o lib/diagrams/database_schema.png
+
+digraph DatabaseSchema {
+  rankdir=LR;
+  node [shape=record, fontsize=10];
+
+  forecasts [label="{forecasts|PK id: INTEGER\lcity: TEXT NOT NULL\llat: REAL\llon: REAL\lfetched_at: INTEGER NOT NULL\lexpires_at: INTEGER\lsource: TEXT\lraw_json: TEXT\l\nIndexes:\n- idx_forecasts_city\n- idx_forecasts_fetched_at}"];
+
+  hourly_entries [label="{hourly_entries|PK id: INTEGER\lFK forecast_id: INTEGER -> forecasts(id)\ldt: INTEGER NOT NULL\ltime: TEXT\ltemp: INTEGER\licon: TEXT\l\nIndexes:\n- idx_hourly_forecast_dt}"];
+
+  daily_entries [label="{daily_entries|PK id: INTEGER\lFK forecast_id: INTEGER -> forecasts(id)\ldate: TEXT NOT NULL\lday: TEXT\lhigh: INTEGER\llow: INTEGER\licon: TEXT\l\nIndexes:\n- idx_daily_forecast_date}"];
+
+  favorites [label="{favorites|PK id: INTEGER\lcity: TEXT NOT NULL\llat: REAL\llon: REAL\lnote: TEXT\lcreated_at: INTEGER}"];
+
+  settings [label="{settings|PK key: TEXT\lvalue: TEXT}"];
+
+  // Relationships
+  forecasts -> hourly_entries [label="1..*", arrowhead=normal];
+  forecasts -> daily_entries [label="1..*", arrowhead=normal];
+
+  // optional association to favorites (not enforced FK)
+  forecasts -> favorites [label="(optional) link", style=dashed, arrowhead=none];
+
+  // layout hints
+  { rank=same; forecasts; favorites }
+  { rank=same; hourly_entries; daily_entries }
+}

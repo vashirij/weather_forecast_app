@@ -1,0 +1,57 @@
+// UI/UX mockups diagram (screen wireframes)
+// Render with: dot -Tpng lib/diagrams/ui_mockups.dot -o lib/diagrams/ui_mockups.png
+
+digraph UI_Mockups {
+  rankdir=TB;
+  node [shape=plain, fontsize=10];
+
+  Today [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Today Screen</B></TD></TR>
+      <TR><TD>
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="4">
+          <TR><TD><B>Header</B><BR/>City, Current Temp, Max/Min</TD></TR>
+          <TR><TD><B>Chart</B><BR/>Mini temp trend</TD></TR>
+          <TR><TD><B>Hourly Tiles</B><BR/>4 items (scroll horiz)</TD></TR>
+          <TR><TD><B>Weekly Preview</B><BR/>6 day tiles</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>
+  >];
+
+  Hourly [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Hourly Screen</B></TD></TR>
+      <TR><TD>
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="4">
+          <TR><TD><B>Header</B><BR/>City, Current Temp</TD></TR>
+          <TR><TD><B>Chart</B><BR/>Min/Max lines (5 points)</TD></TR>
+          <TR><TD><B>Grid</B><BR/>9 hourly tiles</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>
+  >];
+
+  Weekly [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Weekly Screen</B></TD></TR>
+      <TR><TD>
+        <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="4">
+          <TR><TD><B>Header</B><BR/>City</TD></TR>
+          <TR><TD><B>Chart</B><BR/>Min/Max for next 5 days</TD></TR>
+          <TR><TD><B>Tiles</B><BR/>6 day tiles (max above min)</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>
+  >];
+
+  Nav [shape=box, label="Bottom Navigation\n[Today] [Hourly] [Weekly]"];
+
+  // Navigation flow
+  Nav -> Today [label="select Today"];
+  Nav -> Hourly [label="select Hourly"];
+  Nav -> Weekly [label="select Weekly"];
+
+  // Layout hint: stack screens horizontally for comparison
+  { rank=same; Today; Hourly; Weekly }
+}

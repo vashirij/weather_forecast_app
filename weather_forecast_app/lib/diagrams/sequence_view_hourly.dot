@@ -1,0 +1,26 @@
+// Sequence diagram for user viewing the Hourly screen
+// Render: dot -Tpng lib/diagrams/sequence_view_hourly.dot -o lib/diagrams/sequence_view_hourly.png
+
+digraph ViewHourlySequence {
+  rankdir=LR;
+  node [shape=rect, fontsize=10];
+
+  User [label="User", shape=oval];
+  DailyForecastScreen [label="DailyForecastScreen"];
+  Cache [label="Local Cache (optional)"];
+  WeatherService [label="WeatherService"];
+  HourlyScreen [label="HourlyScreen"];
+
+  User -> DailyForecastScreen [label="tap Hourly tab"];
+  DailyForecastScreen -> Cache [label="check cached forecast"];
+  Cache -> DailyForecastScreen [label="cached data? (maybe) "];
+  alt cached
+    DailyForecastScreen -> HourlyScreen [label="render(cached) "];
+    HourlyScreen -> User [label="display hourly view"];
+  else not cached
+    DailyForecastScreen -> WeatherService [label="fetchForecast(lat, lon)"];
+    WeatherService -> DailyForecastScreen [label="return parsed hourly list"];
+    DailyForecastScreen -> HourlyScreen [label="render(data)"];
+    HourlyScreen -> User [label="display hourly view"];
+  end
+}

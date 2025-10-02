@@ -1,0 +1,29 @@
+// ER diagram for local database schema
+// Render with: dot -Tpng lib/diagrams/erd.dot -o lib/diagrams/erd.png
+
+digraph ERD {
+  rankdir=LR;
+  node [shape=record, fontsize=10];
+
+  forecasts [label="{forecasts|PK id: INTEGER\lcity: TEXT\llat: REAL\llon: REAL\lfetched_at: INTEGER\lexpires_at: INTEGER\lsource: TEXT\lraw_json: TEXT}\n"];
+
+
+  hourly_entries [label="{hourly_entries|PK id: INTEGER\lFK forecast_id: INTEGER\ldt: INTEGER\ltime: TEXT\ltemp: INTEGER\licon: TEXT}\n"];
+
+  daily_entries [label="{daily_entries|PK id: INTEGER\lFK forecast_id: INTEGER\ldate: TEXT\lday: TEXT\lhigh: INTEGER\llow: INTEGER\licon: TEXT}\n"];
+
+  favorites [label="{favorites|PK id: INTEGER\lcity: TEXT\llat: REAL\llon: REAL\lnote: TEXT\lcreated_at: INTEGER}\n"];
+
+  settings [label="{settings|PK key: TEXT\lvalue: TEXT}\n"];
+
+  // relationships
+  forecasts -> hourly_entries [label="1..*", arrowhead=normal];
+  forecasts -> daily_entries [label="1..*", arrowhead=normal];
+
+  // optional connections
+  forecasts -> favorites [label="0..1", style=dashed, arrowhead=none];
+
+  // layout hints
+  { rank=same; forecasts; favorites }
+  { rank=same; hourly_entries; daily_entries }
+}

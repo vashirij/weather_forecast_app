@@ -1,0 +1,27 @@
+// App startup flowchart
+// Render: dot -Tpng lib/diagrams/flow_startup.dot -o lib/diagrams/flow_startup.png
+
+digraph FlowStartup {
+  rankdir=TB;
+  node [shape=box, fontsize=11];
+
+  start [shape=oval, label="Start (User opens app)"];
+  init [label="Initialize App / Widgets"];
+  checkPerm [label="Check Location Permission"];
+  requestPerm [label="Request Permission"];
+  permDenied [shape=diamond, label="Permission Granted?"];
+  fallback [label="Show permission error / fallback data"];
+  getLoc [label="Get Current Position"];
+  fetch [label="Fetch Forecast (WeatherService)"];
+  parse [label="Parse & Aggregate Forecast"];
+  render [label="Render Today View"];
+  end [shape=oval, label="Done"];
+
+  start -> init -> checkPerm -> permDenied;
+  permDenied -> requestPerm -> permDenied;
+  permDenied -> fallback [label="No"];
+  permDenied -> getLoc [label="Yes"];
+  getLoc -> fetch -> parse -> render -> end;
+  requestPerm -> fallback [label="Denied"];
+  requestPerm -> getLoc [label="Granted"];
+}

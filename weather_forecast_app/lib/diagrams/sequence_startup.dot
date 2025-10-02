@@ -1,0 +1,26 @@
+// Sequence diagram for app startup and forecast fetch
+// Render: dot -Tpng lib/diagrams/sequence_startup.dot -o lib/diagrams/sequence_startup.png
+
+digraph StartupSequence {
+  rankdir=LR;
+  node [shape=rect, fontsize=10];
+
+  User [label="User", shape=oval];
+  App [label="Flutter App"];
+  DailyForecastScreen [label="DailyForecastScreen"];
+  Geolocator [label="Geolocator (platform)"];
+  WeatherService [label="WeatherService"];
+  OpenWeatherAPI [label="OpenWeather API"];
+  TodayScreen [label="TodayScreen"];
+
+  User -> App [label="open app"];
+  App -> DailyForecastScreen [label="initialize"];
+  DailyForecastScreen -> Geolocator [label="requestPermission() / getCurrentPosition()"];
+  Geolocator -> DailyForecastScreen [label="location(lat, lon)"];
+  DailyForecastScreen -> WeatherService [label="fetchForecast(lat, lon)"];
+  WeatherService -> OpenWeatherAPI [label="HTTP GET /data/2.5/forecast"];
+  OpenWeatherAPI -> WeatherService [label="200 OK + forecast body"];
+  WeatherService -> DailyForecastScreen [label="parsed hourly/daily lists"];
+  DailyForecastScreen -> TodayScreen [label="render(data)"];
+  TodayScreen -> User [label="display Today view"];
+}

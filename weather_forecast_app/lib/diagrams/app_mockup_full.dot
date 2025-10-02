@@ -1,0 +1,100 @@
+// Full app mockup (wireframe & flow)
+// Render with: dot -Tpng lib/diagrams/app_mockup_full.dot -o lib/diagrams/app_mockup_full.png
+
+digraph AppMockupFull {
+  rankdir=TB;
+  node [shape=plain, fontsize=10];
+
+  // Launch / Auth
+  Launch [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Launch</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- Show splash\n- Check auth state\n- Check permissions & cache</TD></TR>
+    </TABLE>
+  >];
+
+  Signin [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Signin Screen</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- Email/Password\n- Forgot Password\n- OAuth (optional)</TD></TR>
+    </TABLE>
+  >];
+
+  PermissionDlg [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Location Permission</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- Request when needed\n- Explain why\n- Open settings link if denied</TD></TR>
+    </TABLE>
+  >];
+
+  // Main app shell and tabs
+  AppShell [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>DailyForecastScreen (App Shell)</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- AppBar (title & menu)\n- BottomNav (Today | Hourly | Weekly)\n- Error overlay / Snackbars\n- Cache indicator</TD></TR>
+    </TABLE>
+  >];
+
+  Today [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD ALIGN="CENTER"><B>Today</B></TD></TR>
+      <TR><TD ALIGN="LEFT">Header: City, Temp, Max/Min\nChart (trend)\nHourly preview (4 tiles)\nWeekly preview (6 tiles)</TD></TR>
+    </TABLE>
+  >];
+
+  Hourly [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD ALIGN="CENTER"><B>Hourly</B></TD></TR>
+      <TR><TD ALIGN="LEFT">Header: City, Temp\nChart: min & max lines\nGrid: 9 tiles</TD></TR>
+    </TABLE>
+  >];
+
+  Weekly [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD ALIGN="CENTER"><B>Weekly</B></TD></TR>
+      <TR><TD ALIGN="LEFT">Header: City\nChart: 5-day min/max\nList: 6 day tiles (max above min)</TD></TR>
+    </TABLE>
+  >];
+
+  Settings [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6">
+      <TR><TD ALIGN="CENTER"><B>Settings</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- Units (C/F)\n- Manage API key (dev)\n- Clear cache\n- About</TD></TR>
+    </TABLE>
+  >];
+
+  ErrorOverlay [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR><TD ALIGN="CENTER"><B>Error / Empty State</B></TD></TR>
+      <TR><TD ALIGN="LEFT">- Network error\n- Permission denied\n- API auth error (401)</TD></TR>
+    </TABLE>
+  >];
+
+  CacheState [shape=note, label="Cache: last fetched data (TTL)\nShow small badge when using cached data"];
+
+  // Flows
+  Launch -> Signin [label="not authenticated"];
+  Launch -> AppShell [label="authenticated"];
+  AppShell -> PermissionDlg [label="needs location"];
+  PermissionDlg -> AppShell [label="granted"];
+  PermissionDlg -> ErrorOverlay [label="denied"];
+
+  AppShell -> Today [label="tab: Today"];
+  AppShell -> Hourly [label="tab: Hourly"];
+  AppShell -> Weekly [label="tab: Weekly"];
+
+  Today -> Hourly [label="tap Hourly tile / nav"];
+  Today -> Weekly [label="tap Weekly preview / nav"];
+
+  AppShell -> Settings [label="menu -> Settings"];
+  AppShell -> ErrorOverlay [label="on API / network error"];
+
+  // Data & services
+  AppShell -> CacheState [label="read cache first"];
+  AppShell -> WeatherService [label="fetchForecast(lat,lon)"];
+  WeatherService [shape=box, label="WeatherService\n(OpenWeather API wrapper)"];
+  WeatherService -> AppShell [label="return parsed models"];
+
+  // layout hints
+  { rank=same; Today; Hourly; Weekly }
+}
