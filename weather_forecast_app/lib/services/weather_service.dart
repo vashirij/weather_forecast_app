@@ -15,8 +15,9 @@ class WeatherService {
     );
     final res = await http.get(url);
     if (res.statusCode != 200) {
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('Weather API error ${res.statusCode}: ${res.body}');
+      }
       throw Exception('Weather API error: ${res.statusCode}');
     }
     final data = json.decode(res.body) as Map<String, dynamic>;
@@ -63,8 +64,9 @@ class WeatherService {
         final temp = (e['main']['temp'] as num).round();
         maxT = (maxT == null || temp > maxT) ? temp : maxT;
         minT = (minT == null || temp < minT) ? temp : minT;
-        if ((e['weather'] as List).isNotEmpty)
+        if ((e['weather'] as List).isNotEmpty) {
           icon = (e['weather'][0]['icon'] as String);
+        }
         dtFirst = DateTime.fromMillisecondsSinceEpoch(
           (e['dt'] as int) * 1000,
           isUtc: true,
@@ -106,8 +108,9 @@ class WeatherService {
     );
     final res = await http.get(url);
     if (res.statusCode != 200) {
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('Reverse geocode error ${res.statusCode}: ${res.body}');
+      }
       return '';
     }
     final data = json.decode(res.body) as List<dynamic>;

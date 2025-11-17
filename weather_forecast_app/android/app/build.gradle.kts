@@ -22,6 +22,13 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // Add Java toolchain to use Java 11 for compilation
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(11))
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.weather_forecast_app"

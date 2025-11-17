@@ -3,6 +3,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:weather_forecast_app/models/user.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/db_service.dart';
 
 class AuthController {
   GoogleSignIn get googleSignIn => _googleSignIn;
@@ -142,6 +144,14 @@ class AuthController {
       await GoogleSignIn().signOut();
     } catch (e) {
       // ignore errors from google sign out
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      await DBService().clearAllData();
+    } catch (e) {
+      rethrow;
     }
   }
 

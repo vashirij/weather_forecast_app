@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../controllers/auth_controller.dart';
 import '../../utils/helpers.dart';
+import '../../utils/validators.dart';
 import 'forgot_password_screen.dart';
-
-const Color kPrimaryColor = Color(0xFF0A3D62);
-const Color kSurfaceLight = Color(0xFFF4F8FF);
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -17,7 +15,7 @@ class _SigninScreenState extends State<SigninScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  // phone sign-in removed; no phone controller required
+
   final _authController = AuthController();
 
   // toggle password visibility
@@ -64,26 +62,13 @@ class _SigninScreenState extends State<SigninScreen> {
 
   void _goToSignup() => Navigator.pushNamed(context, '/signup');
 
-  // === Validators ===
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return "Enter email";
-    if (!value.contains("@")) return "Enter valid email";
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return "Enter password";
-    if (value.length < 8) return "Password too short (min 8 chars)";
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kSurfaceLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Sign In", style: TextStyle(color: Colors.white)),
-        backgroundColor: kPrimaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
@@ -154,7 +139,10 @@ class _SigninScreenState extends State<SigninScreen> {
                                     decoration: const InputDecoration(
                                       labelText: "Email",
                                     ),
-                                    validator: _validateEmail,
+                                    validator: (value) =>
+                                        Validators.isValidEmail(value ?? "")
+                                        ? null
+                                        : "Enter a valid email",
                                   ),
                                   const SizedBox(height: 12),
 
@@ -178,7 +166,10 @@ class _SigninScreenState extends State<SigninScreen> {
                                         },
                                       ),
                                     ),
-                                    validator: _validatePassword,
+                                    validator: (value) =>
+                                        Validators.isValidPassword(value ?? "")
+                                        ? null
+                                        : "Password must be at least 6 characters",
                                   ),
                                   const SizedBox(height: 20),
 

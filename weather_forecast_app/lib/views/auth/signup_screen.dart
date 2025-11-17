@@ -35,8 +35,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
       try {
         // Validate passwords match
-        if (_passwordController.text.trim() !=
-            _confirmPasswordController.text.trim()) {
+        if (!Validators.doPasswordsMatch(
+          _passwordController.text,
+          _confirmPasswordController.text,
+        )) {
           Helpers.showSnackBar(
             context,
             "Passwords do not match",
@@ -142,9 +144,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                       prefixIcon: Icon(Icons.person),
                                     ),
                                     validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? "Enter first name"
-                                        : null,
+                                        Validators.isValidName(value ?? "")
+                                        ? null
+                                        : "Enter a valid first name (2+ characters)",
                                   ),
                                   const SizedBox(height: 12),
 
@@ -156,9 +158,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                       prefixIcon: Icon(Icons.person_outline),
                                     ),
                                     validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? "Enter surname"
-                                        : null,
+                                        Validators.isValidName(value ?? "")
+                                        ? null
+                                        : "Enter a valid surname (2+ characters)",
                                   ),
                                   const SizedBox(height: 12),
 
@@ -186,9 +188,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                       prefixIcon: Icon(Icons.phone),
                                     ),
                                     validator: (value) =>
-                                        value == null || value.isEmpty
-                                        ? "Enter phone"
-                                        : null,
+                                        Validators.isValidPhone(value ?? "")
+                                        ? null
+                                        : "Enter a valid phone number (10+ digits)",
                                   ),
                                   const SizedBox(height: 12),
 
@@ -203,7 +205,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     validator: (value) =>
                                         Validators.isValidPassword(value ?? "")
                                         ? null
-                                        : "Weak password",
+                                        : "Password must be at least 6 characters",
                                   ),
                                   const SizedBox(height: 12),
 
@@ -218,8 +220,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                     validator: (value) {
                                       if (value == null || value.isEmpty)
                                         return "Confirm password";
-                                      if (value.trim() !=
-                                          _passwordController.text.trim()) {
+                                      if (!Validators.doPasswordsMatch(
+                                        _passwordController.text,
+                                        value,
+                                      )) {
                                         return "Passwords do not match";
                                       }
                                       return null;

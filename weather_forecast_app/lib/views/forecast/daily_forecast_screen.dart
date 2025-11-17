@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../controllers/auth_controller.dart';
 import '../auth/signin_screen.dart';
+import '../settings/settings_screen.dart';
 import '../../models/forecast_models.dart';
 import '../../services/weather_service.dart';
 import 'today_screen.dart';
@@ -12,25 +13,8 @@ import 'weekly_screen.dart';
 // Simple daily forecast screen using WeatherService to load real data.
 // Keeps widgets small and readable for maintenance.
 
-const Color kPrimaryColor = Color(0xFF0A3D62);
-const Color kSurfaceLight = Color(0xFFF4F8FF);
 const double kTileWidth = 110.0;
 const double kTileHeight = 120.0;
-
-// Map OpenWeather icon codes to simple IconData for demo purposes.
-IconData _iconFromCode(String code) {
-  if (code.startsWith('01')) return Icons.wb_sunny;
-  if (code.startsWith('02')) return Icons.wb_cloudy;
-  if (code.startsWith('03') || code.startsWith('04')) return Icons.cloud;
-  if (code.startsWith('09') || code.startsWith('10')) return Icons.grain;
-  if (code.startsWith('11')) return Icons.flash_on;
-  if (code.startsWith('13')) return Icons.ac_unit;
-  if (code.startsWith('50')) return Icons.blur_on;
-  return Icons.wb_sunny;
-}
-
-int _parseTemp(String t) =>
-    int.tryParse(t.replaceAll(RegExp(r'[^0-9\-]'), '')) ?? 0;
 
 class DailyForecastScreen extends StatefulWidget {
   final AuthController authController;
@@ -59,7 +43,7 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       'OPENWEATHER_API_KEY',
       defaultValue: '4a5003fd6f81c1b15a3472d2ad89f92e',
     );
-        // debug-only: run DB test in debug builds
+    // debug-only: run DB test in debug builds
     assert(() {
       runDbTest();
       return true;
@@ -89,27 +73,6 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       _loading = false;
     } else {
       _loadWithLocation();
-    }
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await _weatherService.fetchForecast(37.7749, -122.4194);
-      setState(() {
-        _hourly = List<HourlyForecast>.from(res['hourly'] ?? []);
-        _daily = List<DailyForecast>.from(res['daily'] ?? []);
-        _cityName = (res['city'] as String?) ?? '';
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
     }
   }
 
@@ -157,6 +120,13 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   }
 
   void _onMenuSelected(String value) async {
+    if (value == 'settings') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      );
+      return;
+    }
     if (value == 'logout') {
       try {
         await widget.authController.signOut();
@@ -177,17 +147,18 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kSurfaceLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           _titles[_selectedIndex],
           style: const TextStyle(color: Colors.white),
         ),
-        backgroundColor: kPrimaryColor,
+        backgroundColor: Theme.of(context).primaryColor,
         actions: [
           PopupMenuButton<String>(
             onSelected: _onMenuSelected,
             itemBuilder: (_) => const [
+              PopupMenuItem(value: 'settings', child: Text('Settings')),
               PopupMenuItem(value: 'logout', child: Text('Logout')),
             ],
           ),
@@ -255,75 +226,12 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
 
   Widget _hourlyFullView(String city, String current) {
     final data = _hourly.where((h) => h.time != 'Now').take(9).toList();
-    // chart uses first 5
-    final chartItems = data.take(5).toList();
-    final labels = chartItems.map((e) => e.time).toList();
-    final highs = chartItems.map((e) => _parseTemp(e.temp) + 2).toList();
-    final lows = chartItems.map((e) => _parseTemp(e.temp)).toList();
-
     return HourlyScreen(city: city, hourly: data);
   }
 
   Widget _weeklyFullView(String city, String current) {
     final data = _daily.take(6).toList();
     return WeeklyScreen(city: city, weekly: data);
-  }
-
-  Widget _buildHeader(
-    String city,
-    String temp,
-    String icon, {
-    String? min,
-    String? max,
-    String? rain,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            city,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(_iconFromCode(icon), color: kPrimaryColor),
-              const SizedBox(width: 8),
-              Text(
-                temp,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          if (min != null && max != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Min: $min'),
-                  const SizedBox(width: 12),
-                  Text('Max: $max'),
-                ],
-              ),
-            ),
-          if (rain != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6.0),
-              child: Chip(
-                label: Text('Rain: $rain'),
-                backgroundColor: kPrimaryColor.withOpacity(0.08),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }
 
@@ -344,7 +252,7 @@ class ForecastTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
@@ -354,7 +262,7 @@ class ForecastTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Text(top, style: const TextStyle(fontSize: 12)),
-          Icon(icon, color: kPrimaryColor, size: 22),
+          Icon(icon, color: Theme.of(context).primaryColor, size: 22),
           Text(
             bottom,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),

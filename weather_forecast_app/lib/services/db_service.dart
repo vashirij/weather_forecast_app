@@ -191,4 +191,14 @@ class DBService {
       whereArgs: [beforeEpochMs],
     );
   }
+
+  /// Clear all cached data (used on logout)
+  Future<void> clearAllData() async {
+    final database = await db;
+    await database.delete('hourly_entries');
+    await database.delete('daily_entries');
+    await database.delete('forecasts');
+    await database.delete('favorites');
+    await database.delete('settings');
+  }
 }

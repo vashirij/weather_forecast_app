@@ -31,7 +31,8 @@ Future<void> runDbTest() async {
 
     final daily = List.generate(3, (i) {
       final date = DateTime.now().add(Duration(days: i));
-      final dateStr = '${date.year}-${date.month}-${date.day}';
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       return {
         'date': dateStr,
         'day': [
@@ -57,11 +58,15 @@ Future<void> runDbTest() async {
 
     final hourlyRows = await db.getHourlyForForecast(id);
     debugPrint('Hourly rows count: ${hourlyRows.length}');
-    for (var r in hourlyRows) debugPrint('  hourly: $r');
+    for (var r in hourlyRows) {
+      debugPrint('  hourly: $r');
+    }
 
     final dailyRows = await db.getDailyForForecast(id);
     debugPrint('Daily rows count: ${dailyRows.length}');
-    for (var r in dailyRows) debugPrint('  daily: $r');
+    for (var r in dailyRows) {
+      debugPrint('  daily: $r');
+    }
 
     final purged = await db.purgeExpired(
       DateTime.now().millisecondsSinceEpoch + 1,
