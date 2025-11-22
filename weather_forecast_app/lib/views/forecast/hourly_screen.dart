@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/forecast_models.dart';
 import '../../widgets/simple_chart.dart';
+import 'package:weather_forecast_app/controllers/setting_controller.dart';
 
 const Color _kPrimaryH = Color(0xFF0A3D62);
 const double _kTileW = 110.0;
@@ -13,6 +15,16 @@ class HourlyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsController>();
+    final unitSuffix = settings.units == 'imperial' ? '°F' : '°C';
+    String formatTemp(String raw) {
+      if (raw.isEmpty) return 'N/A';
+      final cleaned = raw.replaceAll(RegExp(r'[^0-9\.-]'), '');
+      final n = int.tryParse(cleaned) ?? (double.tryParse(cleaned)?.round());
+      if (n != null) return '${n}$unitSuffix';
+      return raw.replaceAll(RegExp(r'°[CF]'), unitSuffix);
+    }
+
     final chartItems = hourly.take(5).toList();
     final labels = chartItems.map((e) => e.time).toList();
     final highs = chartItems
@@ -31,15 +43,7 @@ class HourlyScreen extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                city,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                hourly.isNotEmpty ? hourly.first.temp : 'N/A',
+                hourly.isNotEmpty ? formatTemp(hourly.first.temp) : 'N/A',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -66,7 +70,7 @@ class HourlyScreen extends StatelessWidget {
             mainAxisSpacing: 12,
             children: hourly
                 .take(9)
-                .map((h) => TileSmall(top: h.time, bottom: h.temp))
+                .map((h) => TileSmall(top: h.time, bottom: formatTemp(h.temp)))
                 .toList(),
           ),
         ),

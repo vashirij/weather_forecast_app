@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class Helpers {
-  static void showSnackBar(context, String message, {bool isError = false}) {
+  // Use a typed BuildContext for clarity and analyzer friendliness.
+  static void showSnackBar(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
     final snackBar = SnackBar(
       content: Text(message),
       backgroundColor: isError

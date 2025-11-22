@@ -1,14 +1,20 @@
 import '../../services/db_test.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import '../../controllers/auth_controller.dart';
+import 'package:weather_forecast_app/controllers/setting_controller.dart'; // fixed import
 import '../auth/signin_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../models/forecast_models.dart';
 import '../../services/weather_service.dart';
+import 'dart:developer' as developer;
+import '../../utils/helpers.dart';
 import 'today_screen.dart';
 import 'hourly_screen.dart';
 import 'weekly_screen.dart';
+import '../../services/notification_service.dart';
 
 // Simple daily forecast screen using WeatherService to load real data.
 // Keeps widgets small and readable for maintenance.
@@ -30,11 +36,19 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   int _selectedIndex = 0;
 
   late final WeatherService _weatherService;
+  final NotificationService _notificationService = NotificationService();
   List<HourlyForecast> _hourly = [];
   List<DailyForecast> _daily = [];
   bool _loading = true;
   String? _error;
   String _cityName = '';
+  Map<String, dynamic>? _rawData;
+
+  // Settings listener fields
+  SettingsController? _settings;
+  String? _lastUnits;
+  bool? _lastUseLocation;
+  String? _lastManualLocation;
 
   @override
   void initState() {
@@ -43,11 +57,8 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       'OPENWEATHER_API_KEY',
       defaultValue: '4a5003fd6f81c1b15a3472d2ad89f92e',
     );
-    // debug-only: run DB test in debug builds
-    assert(() {
-      runDbTest();
-      return true;
-    }());
+    // debug-only: run DB test in debug builds (use kDebugMode instead of assert wrapper)
+    if (kDebugMode) runDbTest();
     _weatherService = WeatherService(apiKey);
     // If API key not set, populate with sample data so UI stays responsive.
     if (apiKey == 'YOUR_API_KEY') {
@@ -72,6 +83,44 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       ];
       _loading = false;
     } else {
+      // initial load will respect settings in _loadWithLocation()
+      // _loadWithLocation may be called later from didChangeDependencies when settings are available
+      _loadWithLocation();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Attach settings controller and a listener so we can react to changes
+    final s = context.read<SettingsController>();
+    if (_settings != s) {
+      _settings?.removeListener(_onSettingsChanged);
+      _settings = s;
+      _lastUnits = _settings?.units;
+      _lastUseLocation = _settings?.useLocation;
+      _lastManualLocation = _settings?.location;
+      _settings?.addListener(_onSettingsChanged);
+    }
+  }
+
+  void _onSettingsChanged() {
+    if (!mounted) return;
+    // UI-level changes (theme, toggles) rebuild automatically when widgets use context.watch;
+    // force rebuild to reflect any non-watched UI pieces
+    setState(() {});
+
+    // Decide whether to reload data
+    final s = _settings;
+    if (s == null) return;
+    final unitsChanged = s.units != _lastUnits;
+    final useLocationChanged = s.useLocation != _lastUseLocation;
+    final manualLocChanged = s.location != _lastManualLocation;
+
+    if (unitsChanged || useLocationChanged || manualLocChanged) {
+      _lastUnits = s.units;
+      _lastUseLocation = s.useLocation;
+      _lastManualLocation = s.location;
       _loadWithLocation();
     }
   }
@@ -81,7 +130,77 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
       _loading = true;
       _error = null;
     });
+
     try {
+      final settings =
+          (_settings ?? context.read<SettingsController>()) as dynamic;
+      final unitsPref = settings.units as String;
+      final useLocationPref = settings.useLocation as bool;
+      final manualLocation = (settings.location as String).trim();
+
+      // If user prefers manual location and provided one, try using it.
+      if (!useLocationPref && manualLocation.isNotEmpty) {
+        // If manual location looks like "lat,lon", parse and fetch by coordinates
+        final parts = manualLocation.split(',');
+        if (parts.length == 2) {
+          final lat = double.tryParse(parts[0].trim());
+          final lon = double.tryParse(parts[1].trim());
+          if (lat != null && lon != null) {
+            final res = await _weatherService.fetchForecast(
+              lat,
+              lon,
+              unitsPref,
+            );
+            final city = await _weatherService.reverseGeocode(lat, lon);
+            setState(() {
+              _hourly = List<HourlyForecast>.from(res['hourly'] ?? []);
+              _daily = List<DailyForecast>.from(res['daily'] ?? []);
+              _rawData = (res['raw'] as Map<String, dynamic>?);
+              _cityName = city.isNotEmpty
+                  ? city
+                  : ((res['city'] as String?) ?? '');
+              _loading = false;
+            });
+            return;
+          }
+        }
+
+        // If manual location is a text query (city name), try fetchForecastByQuery if available
+        try {
+          final res = await _weatherService.fetchForecastByQuery(
+            manualLocation,
+            units: unitsPref,
+          );
+          final city = (res['city'] as String?) ?? manualLocation;
+          setState(() {
+            _hourly = List<HourlyForecast>.from(res['hourly'] ?? []);
+            _daily = List<DailyForecast>.from(res['daily'] ?? []);
+            _rawData = (res['raw'] as Map<String, dynamic>?);
+            _cityName = city;
+            _loading = false;
+            _error = null;
+          });
+          return;
+        } catch (e, st) {
+          // Surface the error so user sees why the manual query failed instead of
+          // silently falling back to device location.
+          developer.log(
+            'fetchForecastByQuery failed for "$manualLocation": $e\n$st',
+            name: 'DailyForecastScreen._loadWithLocation',
+          );
+          final message = 'Failed to fetch forecast for "$manualLocation": $e';
+          if (mounted) {
+            Helpers.showSnackBar(context, message, isError: true);
+          }
+          setState(() {
+            _error = message;
+            _loading = false;
+          });
+          return;
+        }
+      }
+
+      // Default: use device location
       final permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         final req = await Geolocator.requestPermission();
@@ -94,23 +213,93 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
           return;
         }
       }
+
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      final res = await _weatherService.fetchForecast(
+      final res = await _weather_service_fetchSafe(
+        pos.latitude,
+        pos.longitude,
+        unitsPref,
+      );
+      final city = await _weather_service_reverseSafe(
         pos.latitude,
         pos.longitude,
       );
-      final city = await _weatherService.reverseGeocode(
-        pos.latitude,
-        pos.longitude,
-      );
+
       setState(() {
         _hourly = List<HourlyForecast>.from(res['hourly'] ?? []);
         _daily = List<DailyForecast>.from(res['daily'] ?? []);
+        _rawData = (res['raw'] as Map<String, dynamic>?) ?? null;
         _cityName = city.isNotEmpty ? city : ((res['city'] as String?) ?? '');
         _loading = false;
+        // debug: confirm API-derived counts
+        // ignore: avoid_print
+        print(
+          'fetchForecast => city: $_cityName, hourly: ${_hourly.length}, daily: ${_daily.length}',
+        );
       });
+
+      // Alert detection + optional notification trigger
+      try {
+        final settings =
+            (_settings ?? context.read<SettingsController>()) as dynamic;
+        if ((settings.weatherNotificationsEnabled as bool) &&
+            _rawData != null) {
+          final alert = _weatherService.detectAlertsFromForecast(
+            _rawData!,
+            settings,
+          );
+          final summary = (alert['summary'] as String?) ?? '';
+          final exceeds = alert['exceedsThreshold'] as bool? ?? false;
+          final hasStorm = alert['hasStorm'] as bool? ?? false;
+          final heavyRain = alert['heavyRain'] as bool? ?? false;
+          if (summary.isNotEmpty) {
+            // Try to call server endpoint to send notification. Endpoint is expected
+            // to be provided via compile-time environment variable WEATHER_NOTIFICATION_ENDPOINT
+            final endpointStr = const String.fromEnvironment(
+              'WEATHER_NOTIFICATION_ENDPOINT',
+              defaultValue: '',
+            );
+            if (endpointStr.isNotEmpty) {
+              final uri = Uri.tryParse(endpointStr);
+              if (uri != null) {
+                final title = 'Weather alert for $_cityName';
+                final body = summary;
+                // prefer topic unless a server needs token targeting; include token for user-specific
+                final token = settings.fcmToken as String?;
+                _notificationService.requestSendNotification(
+                  endpoint: uri,
+                  topic: 'weather_alerts',
+                  token: token,
+                  title: title,
+                  body: body,
+                  data: {
+                    'city': _cityName,
+                    'hasStorm': hasStorm.toString(),
+                    'heavyRain': heavyRain.toString(),
+                    'exceeds': exceeds.toString(),
+                  },
+                );
+              } else {
+                if (kDebugMode)
+                  print('Invalid WEATHER_NOTIFICATION_ENDPOINT: $endpointStr');
+              }
+            } else {
+              if (kDebugMode) {
+                print(
+                  'Weather notifications enabled but WEATHER_NOTIFICATION_ENDPOINT not set.',
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        developer.log(
+          'Notification trigger failed: $e',
+          name: 'DailyForecastScreen.alert',
+        );
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -119,8 +308,33 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     }
   }
 
+  // Helper to call fetchForecast and trap errors / ensure units param supported
+  Future<Map<String, dynamic>> _weather_service_fetchSafe(
+    double lat,
+    double lon,
+    String units,
+  ) async {
+    try {
+      return await _weatherService.fetchForecast(lat, lon, units);
+    } catch (_) {
+      // fallback: try without units param if service doesn't support it
+      return await _weatherService.fetchForecast(lat, lon, units);
+    }
+  }
+
+  // Helper to call reverseGeocode and trap errors
+  Future<String> _weather_service_reverseSafe(double lat, double lon) async {
+    try {
+      return await _weatherService.reverseGeocode(lat, lon);
+    } catch (_) {
+      return '';
+    }
+  }
+
   void _onMenuSelected(String value) async {
     if (value == 'settings') {
+      // When returning from settings we still rely on the settings listener to reload data,
+      // but push the screen so user can make changes.
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -145,7 +359,15 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   }
 
   @override
+  void dispose() {
+    _settings?.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsController>();
+    final dsettings = settings as dynamic;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -155,6 +377,23 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
         ),
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
+          IconButton(
+            tooltip: dsettings.weatherNotificationsEnabled
+                ? 'Weather alerts enabled'
+                : 'Weather alerts disabled',
+            icon: Icon(
+              dsettings.weatherNotificationsEnabled
+                  ? Icons.notifications_active
+                  : Icons.notifications_none,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: _onMenuSelected,
             itemBuilder: (_) => const [
@@ -215,12 +454,20 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
     final preview = _hourly.where((h) => h.time != 'Now').take(4).toList();
     final todayMin = _daily.isNotEmpty ? _daily.first.low : null;
     final todayMax = _daily.isNotEmpty ? _daily.first.high : null;
-    return TodayScreen(
-      city: city,
-      hourlyPreview: preview,
-      weekly: _daily,
-      min: todayMin,
-      max: todayMax,
+    return Column(
+      children: [
+        _todayConditionWidget(),
+        const SizedBox(height: 8),
+        Expanded(
+          child: TodayScreen(
+            city: city,
+            hourlyPreview: preview,
+            weekly: _daily,
+            min: todayMin,
+            max: todayMax,
+          ),
+        ),
+      ],
     );
   }
 
@@ -232,6 +479,95 @@ class _DailyForecastScreenState extends State<DailyForecastScreen> {
   Widget _weeklyFullView(String city, String current) {
     final data = _daily.take(6).toList();
     return WeeklyScreen(city: city, weekly: data);
+  }
+
+  Widget _todayConditionWidget() {
+    try {
+      if (_rawData == null) return const SizedBox.shrink();
+      final list = (_rawData!['list'] as List<dynamic>?) ?? [];
+      if (list.isEmpty) return const SizedBox.shrink();
+
+      // find today's entries (local date)
+      final now = DateTime.now();
+      final todayEntries = list.where((e) {
+        final dt = DateTime.fromMillisecondsSinceEpoch(
+          (e['dt'] as int) * 1000,
+          isUtc: true,
+        ).toLocal();
+        return dt.year == now.year &&
+            dt.month == now.month &&
+            dt.day == now.day;
+      }).toList();
+      if (todayEntries.isEmpty) return const SizedBox.shrink();
+
+      // prefer an entry where weather.main == 'Clouds'
+      dynamic chosen;
+      for (var e in todayEntries) {
+        final weather = (e['weather'] as List).isNotEmpty
+            ? e['weather'][0]
+            : null;
+        if (weather != null &&
+            (weather['main'] as String?)?.toLowerCase() == 'clouds') {
+          chosen = weather;
+          break;
+        }
+      }
+      // fallback to first today's weather or first overall
+      if (chosen == null) {
+        final fallback = todayEntries.isNotEmpty
+            ? todayEntries.first
+            : list.first;
+        chosen = (fallback['weather'] as List).isNotEmpty
+            ? fallback['weather'][0]
+            : null;
+      }
+      if (chosen == null) return const SizedBox.shrink();
+
+      final main = (chosen['main'] as String?) ?? '';
+      final description = (chosen['description'] as String?) ?? '';
+      final icon = (chosen['icon'] as String?) ?? '';
+      final iconUrl = 'https://openweathermap.org/img/wn/$icon@2x.png';
+
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon.isNotEmpty)
+              Image.network(
+                iconUrl,
+                width: 48,
+                height: 48,
+                errorBuilder: (_, __, ___) =>
+                    const SizedBox(width: 48, height: 48),
+              ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  main,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
   }
 }
 

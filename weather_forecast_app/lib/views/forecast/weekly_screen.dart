@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/forecast_models.dart';
 import '../../widgets/simple_chart.dart';
+import 'package:weather_forecast_app/controllers/setting_controller.dart';
 
-const Color _kPrimaryW = Color(0xFF0A3D62);
 const double _kTileW = 110.0;
 const double _kTileH = 120.0;
 
@@ -13,6 +14,16 @@ class WeeklyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsController>();
+    final unitSuffix = settings.units == 'imperial' ? '°F' : '°C';
+    String formatTemp(String raw) {
+      if (raw.isEmpty) return 'N/A';
+      final cleaned = raw.replaceAll(RegExp(r'[^0-9\.-]'), '');
+      final n = int.tryParse(cleaned) ?? (double.tryParse(cleaned)?.round());
+      if (n != null) return '${n}$unitSuffix';
+      return raw.replaceAll(RegExp(r'°[CF]'), unitSuffix);
+    }
+
     final chartItems = weekly.take(5).toList();
     final labels = chartItems.map((d) => d.day).toList();
     final highs = chartItems
@@ -42,7 +53,7 @@ class WeeklyScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                weekly.isNotEmpty ? weekly.first.high : 'N/A',
+                weekly.isNotEmpty ? formatTemp(weekly.first.high) : 'N/A',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -69,7 +80,13 @@ class WeeklyScreen extends StatelessWidget {
             mainAxisSpacing: 12,
             children: weekly
                 .take(6)
-                .map((d) => TileSmall(top: d.day, high: d.high, low: d.low))
+                .map(
+                  (d) => TileSmall(
+                    top: d.day,
+                    high: formatTemp(d.high),
+                    low: formatTemp(d.low),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -91,25 +108,52 @@ class TileSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tempStyle = TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w600,
-      color: Colors.black,
-    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tempStyle =
+        Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurface,
+        ) ??
+        TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurface,
+        );
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.45)
+                : Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+          ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Text(top, style: const TextStyle(fontSize: 12)),
-          const Icon(Icons.wb_sunny, color: _kPrimaryW, size: 22),
+          Text(
+            top,
+            style:
+                Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ) ??
+                TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
+          Icon(
+            Icons.wb_sunny,
+            color: Theme.of(context).colorScheme.primary,
+            size: 22,
+          ),
           Column(
             children: [
               Text(high, style: tempStyle),

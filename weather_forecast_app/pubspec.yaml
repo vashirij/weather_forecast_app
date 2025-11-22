@@ -15,9 +15,9 @@ dependencies:
     sdk: flutter
 
   # Firebase & Auth
-  firebase_core: ^3.5.0
-  firebase_auth: ^5.3.0
-  google_sign_in: ^6.2.1
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  google_sign_in: ^7.2.0
 
   # State management
   provider: ^6.1.2
@@ -27,10 +27,10 @@ dependencies:
   sign_in_button: ^4.0.1
 
   # HTTP package
-  http: ^0.13.5
+  http: ^1.6.0
 
   # Geolocation package
-  geolocator: ^9.0.2
+  geolocator: ^14.0.2
 
   # SQLite database
   sqflite: ^2.2.8+4
@@ -38,6 +38,7 @@ dependencies:
 
   # Shared preferences
   shared_preferences: ^2.1.1
+  firebase_messaging: ^16.0.4
 
 dev_dependencies:
   flutter_test:
@@ -45,10 +46,10 @@ dev_dependencies:
 
   # Testing utilities
   mocktail: ^1.0.3
-  firebase_auth_mocks: ^0.14.1
+  firebase_auth_mocks: ^0.15.1
 
   # Recommended lint rules
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

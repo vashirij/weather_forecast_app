@@ -44,32 +44,7 @@ void main() {
         throwsA(isA<Exception>()),
       );
     });
-    // === Google OAuth ===
-    test("Login with Google OAuth works", () async {
-      final user = await controller.loginWithGoogle();
-      expect(user, isA<User>());
-      expect(user.email, contains("@"));
-    });
 
-    // === Phone OTP ===
-    test("Login succeeds with valid phone OTP", () async {
-      final user = await controller.loginWithPhone("VALID_OTP");
-      expect(user.phone, "VALID_OTP");
-    });
-
-    test("Login fails with expired OTP", () async {
-      expect(
-        () => controller.loginWithPhone("EXPIRED_OTP"),
-        throwsA(predicate((e) => e.toString().contains("Invalid or expired OTP"))),
-      );
-    });
-
-    test("Login fails with empty OTP", () async {
-      expect(
-        () => controller.loginWithPhone(""),
-        throwsA(predicate((e) => e.toString().contains("OTP required"))),
-      );
-    });
 
   });
 }

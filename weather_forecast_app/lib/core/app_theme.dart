@@ -52,6 +52,10 @@ class AppTheme {
         backgroundColor: kPrimaryColor,
         foregroundColor: kWhite,
       ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: kWhite),
+        bodyMedium: TextStyle(color: kWhite),
+      ),
     );
   }
 }

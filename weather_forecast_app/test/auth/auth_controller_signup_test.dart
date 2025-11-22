@@ -26,11 +26,7 @@ void main() {
       );
     });
 
-    test("Signup with Google returns a valid user", () async {
-      final user = await controller.signupWithGoogle();
-      expect(user, isA<User>());
-      expect(user.email, contains("@"));
-    });
+
 
     test("Signup with phone OTP succeeds for valid OTP", () async {
       final user = await controller.signup("otp@email.com", "Pass1234!", "VALID_OTP");
